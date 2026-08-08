@@ -13,50 +13,61 @@ import {
 } from "recharts";
 
 const SEVERITY_COLORS = {
-  Low: "#16A34A",
-  Medium: "#D97706",
-  High: "#EA580C",
+  Low:      "#16A34A",
+  Medium:   "#D97706",
+  High:     "#EA580C",
   Critical: "#DC2626",
 };
 
+/* ── Custom Tooltip ─────────────────────────────────────────── */
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="rounded-md border border-line bg-panel px-3 py-2 text-xs font-mono shadow-panel">
-      <div className="text-text-muted">{label}</div>
+    <div className="rounded-xl border border-panel-border bg-panel px-3.5 py-2.5 shadow-card-md">
+      <div className="mb-1.5 text-[11px] font-mono text-text-muted">{label}</div>
       {payload.map((p) => (
-        <div key={p.dataKey} className="text-text-primary">
-          {p.name ?? p.dataKey}: {typeof p.value === "number" ? p.value.toFixed(1) : p.value}
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: p.color || p.fill || "#2563EB" }}
+          />
+          <span className="text-[12px] font-mono text-text-primary">
+            {p.name ?? p.dataKey}:{" "}
+            <span className="font-semibold tabular-nums">
+              {typeof p.value === "number" ? p.value.toFixed(1) : p.value}
+            </span>
+          </span>
         </div>
       ))}
     </div>
   );
 }
 
+/* ── Common axis style ───────────────────────────────────────── */
+const AXIS_TICK  = { fill: "#9CA3AF", fontSize: 11, fontFamily: "'IBM Plex Mono',monospace" };
+const AXIS_LINE  = { stroke: "#E4E9F0" };
+const GRID_STYLE = { stroke: "#F0F2F5", strokeDasharray: "4 4" };
+
 /**
- * Two-part risk analytics view: a health-score trend area chart across
- * recent inspections, and a severity distribution bar chart. Pass
- * `trendData` (array of {label, health_score}) and `severityCounts`
- * (object like {Low: 3, Medium: 2, High: 1, Critical: 0}). Pass
- * `loading` to render skeleton placeholders instead of empty charts while
- * the Dashboard's initial fetch is in flight.
+ * Two-part risk analytics panel: grid health area trend + severity bar chart.
+ * Receives `trendData` [{label, health_score}] and `severityCounts` {Low, Medium, High, Critical}.
  */
 export default function RiskAnalyticsChart({ trendData = [], severityCounts = {}, loading = false }) {
-  const barData = ["Low", "Medium", "High", "Critical"].map((severity) => ({
-    severity,
-    count: severityCounts[severity] || 0,
+  const barData = ["Low", "Medium", "High", "Critical"].map((s) => ({
+    severity: s,
+    count: severityCounts[s] || 0,
   }));
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        <div className="min-w-0 lg:col-span-3">
-          <div className="label-eyebrow mb-2">Grid Health Trend</div>
-          <div className="skeleton h-[180px] w-full" />
+        <div className="min-w-0 space-y-2 lg:col-span-3">
+          <div className="label-eyebrow">Grid Health Trend</div>
+          <div className="skeleton h-[200px] w-full rounded-xl" />
         </div>
-        <div className="min-w-0 lg:col-span-2">
-          <div className="label-eyebrow mb-2">Severity Distribution</div>
-          <div className="skeleton h-[180px] w-full" />
+        <div className="min-w-0 space-y-2 lg:col-span-2">
+          <div className="label-eyebrow">Severity Distribution</div>
+          <div className="skeleton h-[200px] w-full rounded-xl" />
         </div>
       </div>
     );
@@ -64,78 +75,90 @@ export default function RiskAnalyticsChart({ trendData = [], severityCounts = {}
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-      <div className="min-w-0 lg:col-span-3">
-        <div className="label-eyebrow mb-2">Grid Health Trend</div>
+
+      {/* ── Health trend area chart ── */}
+      <div className="min-w-0 space-y-3 lg:col-span-3">
+        <div className="label-eyebrow">Grid Health Trend</div>
         {trendData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={180}>
-            <AreaChart data={trendData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={trendData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
-                <linearGradient id="healthFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#2563EB" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#2563EB" stopOpacity={0} />
+                <linearGradient id="healthGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%"   stopColor="#2563EB" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="#2563EB" stopOpacity={0}    />
                 </linearGradient>
               </defs>
-              <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
+              <CartesianGrid {...GRID_STYLE} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: "#64748B", fontSize: 11 }}
-                axisLine={{ stroke: "#E2E8F0" }}
+                tick={AXIS_TICK}
+                axisLine={AXIS_LINE}
                 tickLine={false}
+                dy={6}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fill: "#64748B", fontSize: 11 }}
-                axisLine={{ stroke: "#E2E8F0" }}
+                tick={AXIS_TICK}
+                axisLine={false}
                 tickLine={false}
-                width={30}
+                width={32}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: "#2563EB22", strokeWidth: 1 }} />
               <Area
                 type="monotone"
                 dataKey="health_score"
                 name="Health Score"
                 stroke="#2563EB"
-                strokeWidth={2}
-                fill="url(#healthFill)"
+                strokeWidth={2.5}
+                fill="url(#healthGrad)"
+                dot={{ r: 4, fill: "#FFFFFF", stroke: "#2563EB", strokeWidth: 2.5 }}
+                activeDot={{ r: 6, fill: "#2563EB", stroke: "#FFFFFF", strokeWidth: 2 }}
                 isAnimationActive
-                animationDuration={600}
+                animationDuration={700}
                 animationEasing="ease-out"
               />
             </AreaChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-[180px] items-center justify-center text-sm text-text-muted">
-            No inspection history yet
+          <div className="flex h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-panel-border bg-elevated/40">
+            <span className="text-sm text-text-muted">No inspection history yet</span>
+            <span className="text-[11px] font-mono text-text-faint">Upload a drone image to get started</span>
           </div>
         )}
       </div>
 
-      <div className="min-w-0 lg:col-span-2">
-        <div className="label-eyebrow mb-2">Severity Distribution</div>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={barData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-            <CartesianGrid stroke="#E2E8F0" strokeDasharray="3 3" vertical={false} />
+      {/* ── Severity distribution bar chart ── */}
+      <div className="min-w-0 space-y-3 lg:col-span-2">
+        <div className="label-eyebrow">Severity Distribution</div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={barData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <CartesianGrid {...GRID_STYLE} vertical={false} />
             <XAxis
               dataKey="severity"
-              tick={{ fill: "#64748B", fontSize: 11 }}
-              axisLine={{ stroke: "#E2E8F0" }}
+              tick={AXIS_TICK}
+              axisLine={AXIS_LINE}
               tickLine={false}
+              dy={6}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fill: "#64748B", fontSize: 11 }}
-              axisLine={{ stroke: "#E2E8F0" }}
+              tick={AXIS_TICK}
+              axisLine={false}
               tickLine={false}
-              width={30}
+              width={32}
             />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(61,169,224,0.06)" }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "rgba(37,99,235,0.05)", radius: 6 }}
+            />
             <Bar
               dataKey="count"
               name="Findings"
-              radius={[4, 4, 0, 0]}
+              radius={[6, 6, 0, 0]}
               isAnimationActive
               animationDuration={600}
               animationEasing="ease-out"
+              maxBarSize={48}
             >
               {barData.map((entry) => (
                 <Cell key={entry.severity} fill={SEVERITY_COLORS[entry.severity]} />
@@ -144,6 +167,7 @@ export default function RiskAnalyticsChart({ trendData = [], severityCounts = {}
           </BarChart>
         </ResponsiveContainer>
       </div>
+
     </div>
   );
 }

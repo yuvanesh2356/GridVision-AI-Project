@@ -15,15 +15,13 @@ import {
   AlertOctagon,
 } from "lucide-react";
 
-const SEVERITY_CLASS = {
-  Low: "severity-low",
-  Medium: "severity-medium",
-  High: "severity-high",
-  Critical: "severity-critical",
+const SEVERITY_COLORS = {
+  Low:      { text: "text-healthy",  bg: "bg-healthy-bg",  border: "border-healthy-border",  bar: "#16A34A" },
+  Medium:   { text: "text-medium",   bg: "bg-medium-bg",   border: "border-medium-border",   bar: "#D97706" },
+  High:     { text: "text-high",     bg: "bg-high-bg",     border: "border-high-border",     bar: "#EA580C" },
+  Critical: { text: "text-critical", bg: "bg-critical-bg", border: "border-critical-border", bar: "#DC2626" },
 };
 
-// Same escalating icon set used across AlertCard/InspectionDetail, so
-// severity reads identically everywhere it appears in the app.
 const SEVERITY_ICON = {
   Low: Info,
   Medium: AlertTriangle,
@@ -31,76 +29,69 @@ const SEVERITY_ICON = {
   Critical: Flame,
 };
 
-const SEVERITY_BAR_COLOR = {
-  Low: "#16A34A",
-  Medium: "#D97706",
-  High: "#EA580C",
-  Critical: "#DC2626",
-};
-
-// Icon + accent color per defect type, so the table reads at a glance
-// instead of requiring the viewer to parse text for every row.
 const DEFECT_STYLE = {
-  rust: { icon: Flame, color: "#EA580C" },
-  corrosion: { icon: Waves, color: "#D97706" },
-  crack: { icon: Zap, color: "#DC2626" },
-  broken_insulator: { icon: CircleSlash, color: "#DC2626" },
-  broken_conductor: { icon: Bolt, color: "#DC2626" },
-  loose_wire: { icon: Wind, color: "#EA580C" },
-  bent_tower: { icon: ShieldAlert, color: "#DC2626" },
-  missing_bolt: { icon: HelpCircle, color: "#D97706" },
-  vegetation: { icon: TreeDeciduous, color: "#16A34A" },
-  structural_measurement: { icon: Ruler, color: "#2563EB" },
+  rust:                  { icon: Flame,         color: "#EA580C" },
+  corrosion:             { icon: Waves,          color: "#D97706" },
+  crack:                 { icon: Zap,            color: "#DC2626" },
+  broken_insulator:      { icon: CircleSlash,    color: "#DC2626" },
+  broken_conductor:      { icon: Bolt,           color: "#DC2626" },
+  loose_wire:            { icon: Wind,           color: "#EA580C" },
+  bent_tower:            { icon: ShieldAlert,    color: "#DC2626" },
+  missing_bolt:          { icon: HelpCircle,     color: "#D97706" },
+  vegetation:            { icon: TreeDeciduous,  color: "#16A34A" },
+  structural_measurement:{ icon: Ruler,          color: "#2563EB" },
 };
 
 function defectStyle(defectType) {
-  return DEFECT_STYLE[defectType] || { icon: AlertTriangle, color: "#64748B" };
+  return DEFECT_STYLE[defectType] || { icon: AlertTriangle, color: "#6B7280" };
 }
 
-/** Compact horizontal confidence meter - faster to scan than a bare percent,
- * and color-matched to the finding's severity so high-confidence critical
- * findings visually stand out from low-confidence minor ones. */
+/** Compact horizontal confidence bar, color-matched to severity */
 function ConfidenceBar({ confidence = 0, severity }) {
-  const pct = Math.round(confidence * 100);
-  const color = SEVERITY_BAR_COLOR[severity] || "#2563EB";
+  const pct   = Math.round(confidence * 100);
+  const sev   = SEVERITY_COLORS[severity] || SEVERITY_COLORS.Low;
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-14 overflow-hidden rounded-full bg-elevated">
+    <div className="flex items-center gap-2 min-w-[90px]">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-elevated">
         <div
-          className="h-full rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${pct}%`, background: color }}
+          className="h-full rounded-full transition-all duration-700 ease-out"
+          style={{ width: `${pct}%`, background: sev.bar }}
         />
       </div>
-      <span className="font-mono text-xs text-text-muted">{pct}%</span>
+      <span className="w-8 text-right font-mono text-[11px] text-text-muted tabular-nums">
+        {pct}%
+      </span>
     </div>
   );
 }
 
 /**
- * Tabular list of detected defects for one or many inspections.
- * `findings` items expect: { component, defect_type, confidence, severity, explanation }
+ * Tabular list of detected defects.
+ * `findings` items: { component, defect_type, confidence, severity, explanation }
  */
 export default function FindingsTable({ findings = [], compact = false }) {
   if (!findings.length) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-        <AlertTriangle size={20} className="text-text-muted" />
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-elevated border border-panel-border">
+          <AlertTriangle size={20} className="text-text-muted" />
+        </div>
         <p className="text-sm text-text-muted">No findings recorded yet.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[600px] text-left text-sm">
+    <div className="overflow-x-auto -mx-1">
+      <table className="w-full min-w-[600px] text-left">
         <thead>
-          <tr className="border-b border-line text-text-muted">
-            <th className="label-eyebrow py-2 pr-4 font-normal">Component</th>
-            <th className="label-eyebrow py-2 pr-4 font-normal">Defect</th>
-            <th className="label-eyebrow py-2 pr-4 font-normal">Confidence</th>
-            <th className="label-eyebrow py-2 pr-4 font-normal">Severity</th>
+          <tr className="border-b border-panel-border">
+            <th className="label-eyebrow px-3 py-3 font-normal">Component</th>
+            <th className="label-eyebrow px-3 py-3 font-normal">Defect Type</th>
+            <th className="label-eyebrow px-3 py-3 font-normal">Confidence</th>
+            <th className="label-eyebrow px-3 py-3 font-normal">Severity</th>
             {!compact && (
-              <th className="label-eyebrow py-2 font-normal">Explanation</th>
+              <th className="label-eyebrow px-3 py-3 font-normal">AI Explanation</th>
             )}
           </tr>
         </thead>
@@ -108,39 +99,62 @@ export default function FindingsTable({ findings = [], compact = false }) {
           {findings.map((f, idx) => {
             const { icon: DefectIcon, color } = defectStyle(f.defect_type);
             const SeverityIcon = SEVERITY_ICON[f.severity] || Info;
+            const sev = SEVERITY_COLORS[f.severity] || SEVERITY_COLORS.Low;
             return (
               <tr
                 key={idx}
-                className="animate-fadeInUp border-b border-line/60 last:border-0 hover:bg-elevated/50"
-                style={{ animationDelay: `${idx * 40}ms` }}
+                className="animate-fadeInUp border-b border-panel-border/50 last:border-0
+                  transition-colors duration-100 hover:bg-elevated/60"
+                style={{ animationDelay: `${idx * 35}ms` }}
               >
-                <td className="py-3 pr-4 font-medium capitalize text-text-primary">
-                  {f.component}
+                {/* Component */}
+                <td className="px-3 py-3">
+                  <span className="text-[13px] font-medium capitalize text-text-primary">
+                    {f.component}
+                  </span>
                 </td>
-                <td className="py-3 pr-4">
-                  <span className="flex items-center gap-2 capitalize text-text-primary">
+
+                {/* Defect type */}
+                <td className="px-3 py-3">
+                  <span className="flex items-center gap-2">
                     <span
-                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md"
-                      style={{ background: `${color}1F` }}
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
+                      style={{ background: `${color}18` }}
                     >
                       <DefectIcon size={13} style={{ color }} />
                     </span>
-                    {(f.defect_type || "").replaceAll("_", " ")}
+                    <span className="text-[13px] capitalize text-text-secondary">
+                      {(f.defect_type || "").replaceAll("_", " ")}
+                    </span>
                   </span>
                 </td>
-                <td className="py-3 pr-4">
+
+                {/* Confidence bar */}
+                <td className="px-3 py-3">
                   <ConfidenceBar confidence={f.confidence} severity={f.severity} />
                 </td>
-                <td className="py-3 pr-4">
+
+                {/* Severity badge */}
+                <td className="px-3 py-3">
                   <span
-                    className={`severity-badge ${SEVERITY_CLASS[f.severity] || "severity-low"}`}
+                    className={`severity-badge ${
+                      f.severity === "Low"      ? "severity-low" :
+                      f.severity === "Medium"   ? "severity-medium" :
+                      f.severity === "High"     ? "severity-high" : "severity-critical"
+                    }`}
                   >
-                    <SeverityIcon size={11} />
+                    <SeverityIcon size={10} />
                     {f.severity}
                   </span>
                 </td>
+
+                {/* Explanation */}
                 {!compact && (
-                  <td className="max-w-md py-3 text-text-muted">{f.explanation}</td>
+                  <td className="px-3 py-3 max-w-xs">
+                    <p className="text-[12px] leading-relaxed text-text-muted line-clamp-2">
+                      {f.explanation}
+                    </p>
+                  </td>
                 )}
               </tr>
             );

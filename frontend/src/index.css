@@ -2,9 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────
+   Base
+───────────────────────────────────────────── */
 @layer base {
   html {
     @apply bg-void text-text-primary font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
@@ -12,122 +18,215 @@
   }
 
   ::selection {
-    @apply bg-signal/30 text-text-primary;
+    @apply bg-signal/20 text-signal;
   }
 
   *:focus-visible {
     outline: 2px solid #2563eb;
     outline-offset: 2px;
+    border-radius: 4px;
   }
 
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #0a0f1a;
-  }
+  /* Scrollbar — dark sidebar region */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb {
-    background: #26334d;
-    border-radius: 6px;
+    background: #CBD5E1;
+    border-radius: 99px;
   }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #3da9e0;
-  }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 }
 
+/* ─────────────────────────────────────────────
+   Components
+───────────────────────────────────────────── */
 @layer components {
-  /* Clean enterprise card - the app's shared surface style */
-  .hud-panel {
-    @apply relative bg-panel border border-line rounded-lg shadow-panel;
+
+  /* ── Cards / Panels ── */
+  .card {
+    @apply relative bg-panel border border-panel-border rounded-xl shadow-card;
   }
 
-  /* Corner-bracket HUD decorations are intentionally disabled for the
-     enterprise light theme (they read as dark sci-fi control-room, not
-     professional SaaS). Left as no-ops rather than stripped from every
-     page/component, so no JSX changes were needed anywhere. */
+  .card-hover {
+    @apply card transition-all duration-200 ease-spring
+           hover:shadow-card-hover hover:-translate-y-0.5;
+  }
+
+  /* Legacy alias kept so existing JSX (hud-panel) keeps working */
+  .hud-panel {
+    @apply relative bg-panel border border-panel-border rounded-xl shadow-card;
+  }
   .hud-corner,
   .hud-corner-tl,
   .hud-corner-tr,
   .hud-corner-bl,
-  .hud-corner-br {
-    display: none;
-  }
+  .hud-corner-br { display: none; }
 
+  /* ── Typography ── */
   .label-eyebrow {
-    @apply font-mono text-[11px] uppercase tracking-[0.18em] text-text-muted;
+    @apply font-mono text-[10px] font-medium uppercase tracking-[0.15em] text-text-muted;
   }
 
+  .section-title {
+    @apply font-display text-sm font-semibold text-text-primary tracking-tight;
+  }
+
+  /* ── Severity Badges ── */
   .severity-badge {
-    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-mono font-medium uppercase tracking-wide;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5
+           text-[11px] font-mono font-semibold uppercase tracking-wide;
   }
-  .severity-low {
-    @apply bg-healthy/10 text-healthy border border-healthy/30;
+  .severity-low      { @apply bg-healthy-bg text-healthy border border-healthy-border; }
+  .severity-medium   { @apply bg-medium-bg text-medium border border-medium-border; }
+  .severity-high     { @apply bg-high-bg text-high border border-high-border; }
+  .severity-critical { @apply bg-critical-bg text-critical border border-critical-border; }
+
+  /* ── Buttons ── */
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium
+           transition-all duration-150 focus-visible:ring-2 focus-visible:ring-signal/50
+           focus-visible:ring-offset-1 cursor-pointer select-none;
   }
-  .severity-medium {
-    @apply bg-medium/10 text-medium border border-medium/30;
+  .btn-primary {
+    @apply btn bg-signal text-white shadow-sm
+           hover:bg-signal-dim active:scale-[0.98];
   }
-  .severity-high {
-    @apply bg-high/10 text-high border border-high/30;
+  .btn-secondary {
+    @apply btn bg-panel border border-panel-border text-text-secondary shadow-card
+           hover:border-signal/40 hover:text-signal hover:shadow-glow-sm active:scale-[0.98];
   }
-  .severity-critical {
-    @apply bg-critical/10 text-critical border border-critical/30;
+  .btn-ghost {
+    @apply btn text-text-muted hover:text-text-primary hover:bg-elevated active:scale-[0.98];
+  }
+  .btn-danger {
+    @apply btn bg-critical-bg border border-critical-border text-critical
+           hover:bg-critical/15 active:scale-[0.98];
+  }
+  .btn-sm {
+    @apply px-2.5 py-1.5 text-xs rounded-md;
+  }
+  .btn-xs {
+    @apply px-2 py-1 text-[11px] rounded;
   }
 
+  /* ── Inputs / Selects ── */
+  .form-input {
+    @apply rounded-lg border border-panel-border bg-panel px-3 py-2 text-sm text-text-primary
+           shadow-card placeholder:text-text-faint
+           focus:border-signal/50 focus:outline-none focus:ring-2 focus:ring-signal/20
+           transition-all duration-150;
+  }
+  .form-select {
+    @apply form-input appearance-none pr-8 cursor-pointer;
+  }
+
+  /* ── Status / Toast ── */
   .toast-success {
-    @apply border-healthy/40 bg-healthy/10 text-healthy;
+    @apply border-healthy-border bg-healthy-bg text-healthy;
   }
   .toast-error {
-    @apply border-critical/40 bg-critical/10 text-critical;
+    @apply border-critical-border bg-critical-bg text-critical;
+  }
+
+  /* ── Live pulse dot ── */
+  .live-dot {
+    @apply relative inline-flex h-2 w-2;
+  }
+  .live-dot::before {
+    content: '';
+    @apply absolute inline-flex h-full w-full rounded-full bg-healthy opacity-75 animate-ping;
+  }
+  .live-dot::after {
+    content: '';
+    @apply relative inline-flex h-2 w-2 rounded-full bg-healthy;
+  }
+
+  /* ── Table ── */
+  .data-table {
+    @apply w-full text-left text-sm;
+  }
+  .data-table th {
+    @apply label-eyebrow py-3 px-4 font-normal bg-elevated/60 border-b border-panel-border
+           first:rounded-tl-lg last:rounded-tr-lg;
+  }
+  .data-table td {
+    @apply py-3 px-4 border-b border-panel-border/60;
+  }
+  .data-table tr:last-child td { @apply border-0; }
+  .data-table tbody tr {
+    @apply transition-colors duration-100 hover:bg-elevated/50;
+  }
+
+  /* ── Sidebar-specific ── */
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium
+           text-sidebar-text transition-all duration-150
+           hover:bg-sidebar-hover hover:text-white;
+  }
+  .sidebar-link-active {
+    @apply bg-sidebar-active text-white shadow-sm;
+  }
+
+  /* ── Stat / KPI ── */
+  .kpi-value {
+    @apply font-display text-3xl font-semibold tabular-nums text-text-primary leading-none;
+  }
+  .kpi-label {
+    @apply label-eyebrow mt-2;
   }
 }
 
+/* ─────────────────────────────────────────────
+   Utilities
+───────────────────────────────────────────── */
 @layer utilities {
-  .animate-fadeInUp {
-    animation: fadeInUp 0.4s ease-out both;
-  }
+  .animate-fadeInUp   { animation: fadeInUp 0.45s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-fadeIn     { animation: fadeIn 0.35s ease-out both; }
+  .animate-slideInLeft{ animation: slideInLeft 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-scaleIn    { animation: scaleIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+  .animate-toastIn    { animation: toastIn 0.3s cubic-bezier(0.16,1,0.3,1) both; }
+
+  .text-balance       { text-wrap: balance; }
+  .ease-spring        { transition-timing-function: cubic-bezier(0.16,1,0.3,1); }
+  .transition-spring  { transition: all 0.35s cubic-bezier(0.16,1,0.3,1); }
 }
 
+/* ─────────────────────────────────────────────
+   Keyframes
+───────────────────────────────────────────── */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
 @keyframes toastIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes shimmerMove {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
-.animate-toastIn {
-  animation: toastIn 0.25s ease-out both;
-}
-
-/* Leaflet divIcon reset — our custom SVG markers supply their own visuals,
-   so strip Leaflet's default icon chrome (background/border). */
-.gridvision-marker {
-  background: transparent !important;
-  border: none !important;
-}
-
-/* Skeleton loading placeholders — used for KPI cards, charts, AI Findings,
-   and Timeline Comparison while their data is in flight. */
+/* ─────────────────────────────────────────────
+   Skeleton loader
+───────────────────────────────────────────── */
 .skeleton {
   position: relative;
   overflow: hidden;
-  background: #e9edf3;
-  border-radius: 6px;
+  background: #E9EDF5;
+  border-radius: 8px;
 }
 .skeleton::after {
   content: "";
@@ -137,13 +236,53 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(37, 99, 235, 0.09),
+    rgba(255,255,255,0.6),
     transparent
   );
-  animation: skeletonShimmer 1.6s ease-in-out infinite;
+  animation: shimmerMove 1.8s ease-in-out infinite;
 }
-@keyframes skeletonShimmer {
-  100% {
-    transform: translateX(100%);
-  }
+
+/* ─────────────────────────────────────────────
+   Leaflet custom markers
+───────────────────────────────────────────── */
+.gridvision-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ─────────────────────────────────────────────
+   Sidebar gradient
+───────────────────────────────────────────── */
+.sidebar-gradient {
+  background: linear-gradient(180deg, #0F172A 0%, #0D1526 60%, #0B1220 100%);
+}
+
+/* ─────────────────────────────────────────────
+   Map container override
+───────────────────────────────────────────── */
+.leaflet-container {
+  font-family: 'Inter', sans-serif;
+}
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 24px rgba(15,23,42,0.12), 0 2px 6px rgba(15,23,42,0.08) !important;
+  border: 1px solid #E4E9F0;
+}
+.leaflet-popup-tip-container { display: none; }
+
+/* ─────────────────────────────────────────────
+   Page transition wrapper
+───────────────────────────────────────────── */
+.page-enter {
+  animation: fadeInUp 0.4s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+/* ─────────────────────────────────────────────
+   Gradient text utility
+───────────────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #2563EB 0%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
