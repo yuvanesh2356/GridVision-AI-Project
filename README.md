@@ -1,3 +1,6 @@
+## 🎥 Demo Video
+
+[▶️ Watch GridVision AI Demo](https://drive.google.com/file/d/1G2XqugziDjzE5WVMJYCx9oJOik4EVvC3/view?usp=drivesdk)
 # ⚡ GridVision AI
 
 > 🤖 **Autonomous AI-Powered Power Grid Inspection & Maintenance Intelligence Platform**
